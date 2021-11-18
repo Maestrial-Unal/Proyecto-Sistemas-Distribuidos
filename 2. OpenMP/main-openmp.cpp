@@ -4,12 +4,12 @@
 #include <string>
 #include <time.h>
 #include <stdexcept>
+#include "omp.h"
 
 using namespace std; 
 
 #define GAME_SIZE 3
 #define MAX_CHILD 4
-#define THREADS 3
 
 //  __ __ __
 // |__|__|__|
@@ -18,6 +18,7 @@ using namespace std;
 //
 
 vector<string> states_checked;
+volatile bool found_flag = false;
 
 // ********************************** Problema - PUZZLE **********************************//
 struct state
@@ -172,6 +173,7 @@ string print_state(struct state actual_state){
     return state_print;
 }
 
+
 // ********************************** Problema - PUZZLE **********************************//
 
 // ************************************* Algoritmo BFS *************************************//
@@ -186,6 +188,7 @@ struct node
         node_state = problem_state;
     }
 };
+
 
 vector<node> createChildren(struct node actual_node){
 
@@ -210,27 +213,62 @@ vector<node> createChildren(struct node actual_node){
     return children; 
 }
 
-struct node breadthFirstSearch(vector<node> node_queue, string (*generateStateHash)(struct state), 
+
+struct node breadthFirstSearch(int ixs, vector<node> node_queue, string (*generateStateHash)(struct state), 
                                bool (*validateState)(struct state), bool (*verifyMovement)(struct state, int),
                                struct state (*generateState)(struct state, int), bool (*verifyStateChecked)(struct state)){
 
+    vector<string> states_checked_parallel;
+
     while(!node_queue.empty()){
+        
         //Obtener primero
         struct node actual_node = node_queue.front();
+        if(found_flag) return actual_node;
 
         //Borrar primero
         node_queue.erase(node_queue.begin());
 
         // Revisar si es valido 
-        if (validateState(actual_node.node_state)) return actual_node;
+        if (validateState(actual_node.node_state)){
+            found_flag = true;
+            return actual_node;
+        }
         
         //Crear nodos del árbol
-        vector<node> children = createChildren(actual_node);
+            struct state actual_state = actual_node.node_state;
+            vector<node> children;
+                
+            for(int i=1; i<=MAX_CHILD; i++){
+                if(verifyMovement(actual_state, i)){
+                    struct state new_state = generateState(actual_state, i);
+
+                    
+                    string hash_id = generateStateHash(new_state);
+                    bool verifyPepe = find(states_checked_parallel.begin(), states_checked_parallel.end(), hash_id) != states_checked_parallel.end();
+
+
+                    if(!verifyPepe){
+                        states_checked_parallel.push_back(hash_id);
+
+                        struct node new_node(new_state);
+                        new_node.secuence = actual_node.secuence;
+                        new_node.secuence.push_back(i);
+
+                        children.push_back(new_node);
+                    }
+                }
+            }
+        // vector<node> children = createChildren(actual_node);
         node_queue.insert(node_queue.end(), children.begin(), children.end());
     }
 
     throw invalid_argument("ERROR: No se encontro una solucion para el estado inicial ingresado");
 }
+
+
+
+
 
 void printSolutionStates(struct node node_solution){
     struct state state_movement = node_solution.node_state;
@@ -245,11 +283,11 @@ void printSolutionStates(struct node node_solution){
     cout << "Movimientos minimos requeridos: " << node_solution.secuence.size() << endl;
 }
 
+
 // ************************************* Algoritmo BFS *************************************//
 
 // **************************************** Paralelo ****************************************//
-vector<int> distributeResources(int min, int max){
-    
+vector<int> distributeResources(int min, int max){    
     vector<int> resources;
     int min_per_num = max/min;
     int additional = max % min;
@@ -260,10 +298,12 @@ vector<int> distributeResources(int min, int max){
     return resources;
 }
 
+
 vector<vector<node>> distributeThreads(int num_threads, vector<node> nodes){
 
     if(num_threads == 1) return {nodes};
     if(nodes.size() != 1 ) throw invalid_argument("ERROR: La lista ingresada tiene más de un nodo");
+
 
     struct node actual_node = nodes.back();
     if (validateState(actual_node.node_state)) return {{actual_node}};
@@ -273,8 +313,10 @@ vector<vector<node>> distributeThreads(int num_threads, vector<node> nodes){
     vector<node> children = createChildren(actual_node);
     int num_child = children.size();
 
+    if(num_child == 0) throw invalid_argument("ERROR: El nodo no tiene hijos posibles");
+
+    // Repartir hijos en los hilos
     if(num_child >= num_threads){
-        // Repartir hijos en los hilos
         vector<int> child_per_threads = distributeResources(num_threads, num_child);
         
         for (int& i: child_per_threads){
@@ -285,8 +327,9 @@ vector<vector<node>> distributeThreads(int num_threads, vector<node> nodes){
             }
             threads_queues.push_back(thread_queue);
         }
-    }else{
-        // Repartir hilos en los hijos
+    }
+    // Repartir hilos en los hijos
+    else{
         vector<int> threads_per_child = distributeResources(num_child, num_threads);
 
         for (int i = 0; i<threads_per_child.size(); i++){
@@ -295,7 +338,7 @@ vector<vector<node>> distributeThreads(int num_threads, vector<node> nodes){
 
             if(threads_per_child[i] > 1){
                 new_queues = distributeThreads(threads_per_child[i], new_nodes);
-                if(new_queues.size() == 1 ) return new_queues;
+                if(new_queues.size() == 1) return new_queues;
             }
             
             threads_queues.insert( threads_queues.end(), new_queues.begin(), new_queues.end());
@@ -306,20 +349,30 @@ vector<vector<node>> distributeThreads(int num_threads, vector<node> nodes){
 }
 
 
+
 // **************************************** Paralelo ****************************************//
 int main()
 {
     clock_t start=clock();
 
-    int num_thread = 8;
+    int num_thread = 6;
 
     // Genera el estado inicial
-    // int initial_game_matrix[3][3] = { {2,3,5},
-    //                                   {7,0,6},
-    //                                   {1,4,8}};
-    int initial_game_matrix[3][3] = { {1,0,2},
-                                      {3,4,5},
-                                      {6,7,8}};
+    
+    // 9
+    // int initial_game_matrix[3][3] = { {3,1,4},
+    //                                   {0,7,2},
+    //                                   {6,8,5}};
+
+    // 19
+    int initial_game_matrix[3][3] = { {7,3,5},
+                                      {0,2,6},
+                                      {1,4,8}};
+
+    // 1
+    // int initial_game_matrix[3][3] = { {1,0,2},
+    //                                   {3,4,5},
+    //                                   {6,7,8}};
 
     struct state initial_state(initial_game_matrix);
     struct node initial_node(initial_state);
@@ -331,9 +384,13 @@ int main()
     struct node node_solution = initial_node;
     
     if(num_thread == 1){
-        struct node node_solution = breadthFirstSearch(node_queue, generateStateHash, 
-                                                       validateState, verifyMovement,
-                                                       generateState, verifyStateChecked);
+        node_solution = breadthFirstSearch( -1, node_queue, 
+                                            generateStateHash, 
+                                            validateState, 
+                                            verifyMovement,
+                                            generateState,
+                                            verifyStateChecked
+                                          );
     }else{
         // Secuencialmente se busca una solución mientras se contruyen los subconjuntos
         // de nodos que evaluará cada hilo en caso de no encontrar dicha solución
@@ -346,21 +403,50 @@ int main()
         else{
             //PARALELISMO INICIA
 
+            if(nodes_per_thread.size() != num_thread) throw invalid_argument("ERROR: No hay suficientes nodos asignados");
 
-            //¿Cómo saber que la respuesta encontrada es la de menor altura?
-            //¿Manejar variable para conocer la altura del nodo?
+            // #pragma omp parallel num_threads(num_thread) shared(found_flag, states_checked)
+            // #pragma omp parallel num_threads(num_thread) shared(states_checked)
+            // #pragma omp parallel num_threads(num_thread)
+            #pragma omp parallel num_threads(num_thread) shared(found_flag)
+            {
+                #pragma omp for
+                for(int i=0; i<num_thread; i++){
+                    struct node solution  = breadthFirstSearch( i, nodes_per_thread[i], 
+                                                                generateStateHash, 
+                                                                validateState, 
+                                                                verifyMovement,
+                                                                generateState,
+                                                                verifyStateChecked
+                                                               );
 
-            for(int i=0; i<nodes_per_thread.size(); i++){
-                cout << "HILO: " << i+1 << "\n\n" << endl;
-                for(int j=0; j<nodes_per_thread[i].size(); j++){
-                    cout<< print_state(nodes_per_thread[i][j].node_state)<<endl;
+                    // cout<< print_state(solution.node_state)<<endl;
+                    cout << i << " : " <<  validateState(solution.node_state) << endl;           
+                    cout << "ER PEPE\n";
+                    if(validateState(solution.node_state)){
+                        node_solution = solution;
+                    }                                                 
+                    
                 }
-                cout << "\n\n" << endl;
             }
+            
             cout << "-----------------------------------------------------------------------------" << endl;
+            //¿Cómo saber que la respuesta encontrada es la de menor altura? Variable global
+            //¿Manejar variable para conocer la altura del nodo? Tamaño de la secuencia del nodo
+
+            
+            // for(int i=0; i<nodes_per_thread.size(); i++){
+            //     cout << "HILO: " << i+1 << "\n\n" << endl;
+            //     for(int j=0; j<nodes_per_thread[i].size(); j++){
+            //         cout<< print_state(nodes_per_thread[i][j].node_state)<<endl;
+            //     }
+            //     cout << "\n\n" << endl;
+            // }
+            // cout << "-----------------------------------------------------------------------------" << endl;
             //PARALELISMO TERMINA
+            
         }
-    }    
+    }
     
     printSolutionStates(node_solution);
 
@@ -371,6 +457,7 @@ int main()
         
     return 0;
 }
+
 
 
 // int main()

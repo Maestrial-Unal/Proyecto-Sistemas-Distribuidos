@@ -1,3 +1,10 @@
 cls
 g++ -o main-openmp main-openmp.cpp -fopenmp
 .\main-openmp
+
+
+
+cls
+g++ -o proof proof.cpp -fopenmp
+.\proof
+
