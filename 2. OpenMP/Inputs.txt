@@ -1,24 +1,64 @@
+{0,7,3},
+{1,2,5},
+{4,8,6}
+
+276.31 segundos -> 4.6 minutos
+26 movimientos
+
+
+{7,0,3},
+{1,2,5},
+{4,8,6}
+
+120.7 segundos -> 2 minutos
+25 movimientos
+
+
+{7,3,0},
+{1,2,5},
+{4,8,6} 
+
+116.629 segundos -> 1.94 minutos
+24 movimientos
+
+
 {7,3,5},
 {1,2,0},
 {4,8,6} 
 
-517 segundos -> 8.6 minutos
+105,951 segundos -> 1.7 minutos
 23 movimientos
+
+
+{7,3,5},
+{1,2,6},
+{4,8,0} 
+
+31.507 segundos -> 0.51 minutos
+22 movimientos
 
 
 {7,3,5},
 {1,2,6},
 {4,0,8}
 
-194.077 segundos -> 3.2 mininutos
+27.761 segundos -> 0.46 mininutos
 21 movimientos
+
+
+{7,3,5},
+{1,2,6},
+{0,4,8}
+
+10.781 segundos -> 0.179 mininutos
+20 movimientos
 
 
 {7,3,5},
 {0,2,6},
 {1,4,8}
 
-49 segundos -> 0.8 minutos
+9.989 segundos -> 0.166 minutos
 19 movimientos
 
 
@@ -26,9 +66,37 @@
 {7,2,6},
 {1,4,8}
 
-22.151 segundos -> 0.36 minutos
+3.829 segundos -> 0,06 minutos
 18 movimientos
 
 
+{3,0,5},
+{7,2,6},
+{1,4,8}
 
+3.599 segundos -> 0.059 minutos
+17 movimientos
+
+
+{3,2,5},
+{7,0,6},
+{1,4,8}
+
+1.673 segundos -> 0.027 minutos
+16 movimientos
+
+
+{3,2,5},
+{7,6,0},
+{1,4,8}
+
+0.169 segundos -> 0 minutos
+15 movimientos
  
+
+{3,2,5},
+{6,0,8},
+{7,1,4}
+
+0.011 segundos -> 0 minutos
+10 movimientos

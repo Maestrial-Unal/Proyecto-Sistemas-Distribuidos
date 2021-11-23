@@ -351,9 +351,9 @@ vector<vector<node>> distributeThreads(int num_threads, vector<node> nodes){
 
 int main()
 {
-    clock_t start=clock();
 
-    int num_thread = 8;
+    int num_thread = 2;
+    double repetitions = 10;
 
     // Genera el estado inicial
     int initial_game_matrix[3][3] = { {7,3,5},
@@ -368,6 +368,8 @@ int main()
     states_checked.push_back(generateStateHash(initial_state));
 
     struct node node_solution = initial_node;
+
+    double totalTime = 0;
     
     if(num_thread == 1){
         node_solution = breadthFirstSearch( node_queue, 
@@ -385,34 +387,45 @@ int main()
         if(nodes_per_thread.size()==1)
             node_solution = nodes_per_thread[0][0];
         else{
-            if(nodes_per_thread.size() != num_thread) throw invalid_argument("ERROR: No hay suficientes nodos asignados");
+            for(int i=0; i<repetitions; i++){
+                clock_t start=clock();
 
-            #pragma omp parallel num_threads(num_thread) shared(found_flag)
-            {
-                #pragma omp for
-                for(int i=0; i<num_thread; i++){
-                    struct node solution  = breadthFirstSearch( nodes_per_thread[i], 
-                                                                generateStateHash, 
-                                                                validateState, 
-                                                                verifyMovement,
-                                                                generateState,
-                                                                verifyStateChecked
-                                                               );
+                found_flag = false;
 
-                    if(validateState(solution.node_state)){
-                        node_solution = solution;
+                if(nodes_per_thread.size() != num_thread) throw invalid_argument("ERROR: No hay suficientes nodos asignados");
+
+                #pragma omp parallel num_threads(num_thread) shared(found_flag)
+                {
+                    #pragma omp for
+                    for(int i=0; i<num_thread; i++){
+                        struct node solution  = breadthFirstSearch( nodes_per_thread[i], 
+                                                                    generateStateHash, 
+                                                                    validateState, 
+                                                                    verifyMovement,
+                                                                    generateState,
+                                                                    verifyStateChecked
+                                                                );
+
+                        if(validateState(solution.node_state)){
+                            node_solution = solution;
+                        }
                     }
+                    // #pragma omp barrier
+
+                    // cout<<"llega"<<endl;
                 }
+
+                
+
+                clock_t end = clock();
+                double elapsedTime = (double(end-start)/CLOCKS_PER_SEC);
+                cout << "Tiempo de ejecucion "<< i+1 <<": "<< elapsedTime << endl;
+                totalTime += elapsedTime;
             }
         }
     }
     
-    printSolutionStates(node_solution);
-
-    //Se hace la impresión de la duración del programa
-    clock_t end = clock();
-    double elapsedTime = (double(end-start)/CLOCKS_PER_SEC);
-    cout << "Tiempo de ejecucion: " << elapsedTime << endl;
+    cout << "Promedio: " << totalTime/repetitions << endl;
         
     return 0;
 }
