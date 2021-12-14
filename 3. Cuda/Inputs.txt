@@ -1,0 +1,110 @@
+{0,7,3},
+{1,2,5},
+{4,8,6}
+
+60.3 segundos //512 hilos 8 bloques
+25 segundos //550 hilos 8 bloques
+26 movimientos
+
+
+{7,0,3},
+{1,2,5},
+{4,8,6}
+
+296 segundos //256 hilos 4 bloques
+74 segundos //512 hilos 8 bloques
+52 segundos //550 hilos 8 bloques
+25 movimientos
+
+
+{7,3,0},
+{1,2,5},
+{4,8,6} 
+
+75.1 segundos //256 hilos 4 bloques
+25 segundos //640 hilos 10 bloques
+24 movimientos
+
+
+{7,3,5},
+{1,2,0},
+{4,8,6} 
+
+45 segundos -> //256 hilos 4 bloques
+23 movimientos
+
+
+{7,3,5},
+{1,2,6},
+{4,8,0} 
+
+15 segundos //256 hilos 4 bloques
+262.3 segundos //128 hilos 2 bloques
+22 movimientos
+
+
+{7,3,5},
+{1,2,6},
+{4,0,8}
+
+44.4 segundos //128 hilos 2 bloques
+21 movimientos
+
+
+{7,3,5},
+{1,2,6},
+{0,4,8}
+
+19.8 segundos //128 hilos 2 bloques
+20 movimientos
+
+
+{7,3,5},
+{0,2,6},
+{1,4,8}
+
+10.2 segundos //128 hilos 2 bloques
+19 movimientos
+
+
+{0,3,5},
+{7,2,6},
+{1,4,8}
+
+9.7 segundos //128 hilos 2 bloques
+18 movimientos
+
+
+{3,0,5},
+{7,2,6},
+{1,4,8}
+
+1.192 segundos //128 hilos 2 bloques
+17 movimientos
+
+
+{3,2,5},
+{7,0,6},
+{1,4,8}
+
+0.7 segundos //128 hilos 2 bloques
+16 movimientos
+
+
+{3,2,5},
+{7,6,0},
+{1,4,8}
+
+0.7 segundos //128 hilos 2 bloques
+15 movimientos
+ 
+
+{3,2,5},
+{6,0,8},
+{7,1,4}
+
+0.4 segundos //128 hilos 2 bloques
+10 movimientos
+
+TODO CON MEMORIA DE 2250
+//128 hilos 2 bloques -> Soporta 5000 de memoria //Soporta 6000 (?)

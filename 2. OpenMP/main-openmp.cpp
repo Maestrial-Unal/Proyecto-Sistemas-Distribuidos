@@ -356,9 +356,9 @@ int main()
     int num_thread = 8;
 
     // Genera el estado inicial
-    int initial_game_matrix[3][3] = { {7,3,5},
-                                      {1,2,6},
-                                      {4,0,8}};
+    int initial_game_matrix[3][3] = {{ 0,3,5 },
+                                     { 7,1,2 },
+                                     { 4,8,6 }};
 
     struct state initial_state(initial_game_matrix);
     struct node initial_node(initial_state);

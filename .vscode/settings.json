@@ -4,5 +4,6 @@
         "vector": "cpp",
         "iostream": "cpp",
         "xstring": "cpp"
-    }
+    },
+    "C_Cpp.errorSquiggles": "Disabled"
 }

@@ -1,0 +1,3 @@
+cls
+nvcc "main.cu" -o main
+.\main
