@@ -19,6 +19,7 @@ using namespace std;
 //
 
 vector<string> states_checked;
+bool iam_found = false;
 // volatile bool found_flag = false;
 
 // ********************************** Problema - PUZZLE **********************************//
@@ -271,8 +272,6 @@ void breadthFirstSearch(vector<node> node_queue, int id_process, int num_process
         
     
     
-    
-    
 
     while (!node_queue.empty() )
     {   
@@ -287,18 +286,18 @@ void breadthFirstSearch(vector<node> node_queue, int id_process, int num_process
         
         // Revisar si se encontro el resultado
         if(id_process == 0){
-            for(int i=1; i< num_process; i++){
-                MPI_Test(&requests_found[i], &flag_request_found, MPI_STATUS_IGNORE);
-                if(flag_request_found==1){
-                    // Enviar señal de terminar
-                    flag_found = 1;
-                    for(int i=1; i< num_process; i++){
-                        MPI_Ssend(&flag_found, 1, MPI_INT, i, tag_terminate, MPI_COMM_WORLD);
-                    }
-                    // detener proceso
-                    return;
+            int index;
+            MPI_Testany(num_process, requests_found, &index, &flag_request_found, MPI_STATUS_IGNORE);
+            if(flag_request_found==1){
+                // Enviar señal de terminar
+                flag_found = 1;
+                for(int i=1; i< num_process; i++){
+                    MPI_Ssend(&flag_found, 1, MPI_INT, i, tag_terminate, MPI_COMM_WORLD);
                 }
+                // detener proceso
+                return;
             }
+            
         }
             
         //Obtener primero
@@ -307,15 +306,17 @@ void breadthFirstSearch(vector<node> node_queue, int id_process, int num_process
 
         // Revisar si es valido
         if (validateState(actual_node.node_state))
-        {   cout << "\n " << endl;
+        {   
             cout << "Node Solution" << endl;
             cout << "Encontrado por el proceso: " << id_process << endl;
             cout << "Encontrado en el nodo: " << nodo_name << endl;
-            
-            // printSolutionStates(actual_node);
+            cout << "\n " << endl;
+
+            printSolutionStates(actual_node);
 
             // Informar al proceso 0 de detener los otros procesos
             flag_found = 1;
+            iam_found = true;
             if(id_process != 0){
                 MPI_Ssend(&flag_found, 1, MPI_INT, 0, tag_found, MPI_COMM_WORLD);
             }
@@ -452,9 +453,12 @@ int main(int argc, char *argv[])
 
 
     // TIME: END
-    clock_t end = clock();
-    double elapsedTime = (double(end - start) / CLOCKS_PER_SEC);
-    cout << "Tiempo de ejecucion: " << elapsedTime << endl;
+    if(iam_found){
+        clock_t end = clock();
+        double elapsedTime = (double(end - start) / CLOCKS_PER_SEC);
+        cout << "Tiempo de ejecucion: " << elapsedTime << endl;
+    }
+    
     
     // TERMINAR PROCESO
     // MPI_Abort(MPI_COMM_WORLD, -1);
