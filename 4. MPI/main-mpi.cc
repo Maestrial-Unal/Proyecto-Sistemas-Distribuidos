@@ -251,27 +251,26 @@ void breadthFirstSearch(vector<node> node_queue, int id_process, int num_process
 
     vector<string> states_checked_parallel;
 
-    // Indicador de terminar el proceso
-    int flag_terminate = 0;
-    int flag_request_terminate = 0;
-    int tag_terminate = 0;
-    MPI_Request request_terminate;
-    if(id_process != 0)
-        MPI_Irecv(&flag_terminate, 1, MPI_INT, 0, tag_terminate, MPI_COMM_WORLD, &request_terminate);
-    
     // Indicador de encontrar el resultado
     int flag_found = 0;
-    int flag_request_found = 0;
     int tag_found = 1;
     MPI_Request requests_found[num_process];
+    int flag_request_found = 0;
     if(id_process == 0){
         for(int i=1; i< num_process; i++){
             MPI_Irecv(&flag_found, 1, MPI_INT, i, tag_found, MPI_COMM_WORLD, &requests_found[i]);
         }
     }
         
+
+    // Indicador de terminar el proceso
+    int flag_terminate = 0;
+    MPI_Request request_terminate;
+    int flag_request_terminate = 0;
+    if(id_process != 0)
+        MPI_Ibcast(&flag_terminate, 1, MPI_INT, 0, MPI_COMM_WORLD, &request_terminate);
     
-    
+
 
     while (!node_queue.empty() )
     {   
@@ -279,25 +278,20 @@ void breadthFirstSearch(vector<node> node_queue, int id_process, int num_process
         if(id_process != 0){
             MPI_Test(&request_terminate, &flag_request_terminate, MPI_STATUS_IGNORE);
             if(flag_request_terminate == 1){
-                // Detener Proceso
-                return;
+                if(flag_terminate = 1){
+                    // Detener Proceso
+                    return;
+                }
             }
         }
-        
         // Revisar si se encontro el resultado
         if(id_process == 0){
             int index;
             MPI_Testany(num_process, requests_found, &index, &flag_request_found, MPI_STATUS_IGNORE);
             if(flag_request_found==1){
-                // Enviar señal de terminar
-                flag_found = 1;
-                for(int i=1; i< num_process; i++){
-                    MPI_Ssend(&flag_found, 1, MPI_INT, i, tag_terminate, MPI_COMM_WORLD);
-                }
-                // detener proceso
+                MPI_Ibcast(&flag_terminate, 1, MPI_INT, 0, MPI_COMM_WORLD, &request_terminate);
                 return;
             }
-            
         }
             
         //Obtener primero
@@ -307,6 +301,11 @@ void breadthFirstSearch(vector<node> node_queue, int id_process, int num_process
         // Revisar si es valido
         if (validateState(actual_node.node_state))
         {   
+            
+            flag_found = 1;
+            flag_terminate = 1;
+            iam_found = true;
+
             cout << "Node Solution" << endl;
             cout << "Encontrado por el proceso: " << id_process << endl;
             cout << "Encontrado en el nodo: " << nodo_name << endl;
@@ -315,17 +314,13 @@ void breadthFirstSearch(vector<node> node_queue, int id_process, int num_process
             printSolutionStates(actual_node);
 
             // Informar al proceso 0 de detener los otros procesos
-            flag_found = 1;
-            iam_found = true;
-            if(id_process != 0){
+            if(id_process != 0)
                 MPI_Ssend(&flag_found, 1, MPI_INT, 0, tag_found, MPI_COMM_WORLD);
-            }
+            
             // Si es el proceso 0 de detener todos los proceso
-            else{
-                for(int i=1; i< num_process; i++){
-                    MPI_Ssend(&flag_found, 1, MPI_INT, i, tag_terminate, MPI_COMM_WORLD);
-                }
-            }
+            else
+                MPI_Ibcast(&flag_terminate, 1, MPI_INT, 0, MPI_COMM_WORLD, &request_terminate);
+
             return;
         }
 
@@ -415,9 +410,9 @@ int main(int argc, char *argv[])
 
     // Genera el estado inicial
     int initial_game_matrix[3][3] = {
-        {7,3,5},
-        {1,2,6},
-        {0,4,8}
+        {3,0,5},
+        {7,2,6},
+        {1,4,8}
     };
 
     struct state initial_state(initial_game_matrix);
@@ -461,7 +456,7 @@ int main(int argc, char *argv[])
     
     
     // TERMINAR PROCESO
-    // MPI_Abort(MPI_COMM_WORLD, -1);
+    cout << "Proceso terminado: " << id_process << endl;
     MPI_Finalize();
     return 0;
 }
