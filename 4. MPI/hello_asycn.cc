@@ -25,7 +25,7 @@ int main(int argc, char *argv[]){
         int ready = 0;
 
         while(flag == 0){
-            // MPI_Test(&request, &ready, MPI_STATUS_IGNORE);
+            MPI_Test(&request, &ready, MPI_STATUS_IGNORE);
             printf("[Process %d]. Hi %d.\n", iam, ready);
         }
         
