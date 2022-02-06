@@ -278,10 +278,9 @@ void breadthFirstSearch(vector<node> node_queue, int id_process, int num_process
         if(id_process != 0){
             MPI_Test(&request_terminate, &flag_request_terminate, MPI_STATUS_IGNORE);
             if(flag_request_terminate == 1){
-                if(flag_terminate = 1){
-                    // Detener Proceso
-                    return;
-                }
+                // Detener Proceso
+                return;
+                
             }
         }
         // Revisar si se encontro el resultado
@@ -410,9 +409,9 @@ int main(int argc, char *argv[])
 
     // Genera el estado inicial
     int initial_game_matrix[3][3] = {
-        {3,0,5},
-        {7,2,6},
-        {1,4,8}
+        {7,3,5},
+        {1,2,6},
+        {4,8,0} 
     };
 
     struct state initial_state(initial_game_matrix);
@@ -444,7 +443,15 @@ int main(int argc, char *argv[])
         nodes_process.push_back(nodes[i]);
 
     // Ejecutar busqueda de la seccion
-    breadthFirstSearch(nodes_process, id_process, num_process, nodo_name);
+    try
+    {
+        breadthFirstSearch(nodes_process, id_process, num_process, nodo_name);
+    }
+    catch (std::exception& e)
+    {
+        cout << "Proceso terminado: " << id_process << endl;
+    }
+    
 
 
     // TIME: END

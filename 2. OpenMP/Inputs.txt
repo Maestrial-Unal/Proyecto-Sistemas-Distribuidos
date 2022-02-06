@@ -86,17 +86,21 @@
 16 movimientos
 
 
+
+
 {3,2,5},
 {7,6,0},
 {1,4,8}
 
 0.169 segundos -> 0 minutos
 15 movimientos
+
  
 
 {3,2,5},
 {6,0,8},
 {7,1,4}
 
-0.011 segundos -> 0 minutos
-10 movimientos
+
+14 movimientos
+OPENMP:     0.011 segundos -> 0 minutos
